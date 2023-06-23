@@ -1,0 +1,51 @@
+#!/bin/bash
+
+for i in "$@"; do
+  case $i in
+    -n=*|--name=*)
+      NAME="${i#*=}"
+      shift
+      ;;
+    -o=*|--output=*)
+      OUTDIR="${i#*=}"
+      shift;;
+    -v|--verbose)
+      VERBOSE=TRUE
+      shift
+      ;;
+    -*|--*)
+      echo "Unknown option $i"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if ! test $NAME
+then
+    NAME="*"
+fi
+
+if [ ${#POSITIONAL_ARGS[@]} == 0 ]
+then
+    POSITIONAL_ARGS+=(".")
+fi
+
+if ! test $OUTDIR
+then
+    OUTDIR="${POSITIONAL_ARGS[0]}"
+fi
+
+find ${POSITIONAL_ARGS[0]} -name "$NAME" -type f -print0 | while read -d $'\0' file
+do
+    basename=$(basename $file)
+    if test $VERBOSE
+    then
+        mv -v "$file" "$OUTDIR/$basename"
+    else
+        mv "$file" "$OUTDIR/$basename"
+    fi
+done
